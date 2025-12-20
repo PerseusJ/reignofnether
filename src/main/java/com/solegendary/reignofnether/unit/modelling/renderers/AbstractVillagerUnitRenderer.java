@@ -17,10 +17,6 @@ public abstract class AbstractVillagerUnitRenderer<T extends AbstractIllager> ex
     protected AbstractVillagerUnitRenderer(EntityRendererProvider.Context p_174182_, VillagerUnitModel<T> p_174183_, float p_174184_) {
         super(p_174182_, p_174183_, p_174184_);
         this.addLayer(new CustomHeadLayer<>(this, p_174182_.getModelSet(), p_174182_.getItemInHandRenderer()));
-        this.addLayer(new VillagerUnitArmorLayer<>(this,
-                new HumanoidArmorModel<>(p_174182_.bakeLayer(ModelLayers.ZOMBIE_INNER_ARMOR)),
-                new HumanoidArmorModel<>(p_174182_.bakeLayer(ModelLayers.ZOMBIE_OUTER_ARMOR))
-        ));
     }
 
     protected void scale(T p_114919_, PoseStack p_114920_, float p_114921_) {
