@@ -1107,6 +1107,16 @@ public class BuildingPlacement {
 
     public void changeStructure(String newStructureName) {
         ArrayList<BuildingBlock> newBlocks = BuildingBlockData.getBuildingBlocksFromNbt(newStructureName, this.getLevel());
+        if (newBlocks.isEmpty()) {
+            ReignOfNether.LOGGER.warn(
+                "BuildingPlacement.changeStructure: structure '{}' produced 0 blocks for building '{}' at {} (owner='{}'); keeping existing structure",
+                newStructureName,
+                (building != null ? building.name : "<null>"),
+                originPos,
+                ownerName
+            );
+            return;
+        }
         this.blocks = getAbsoluteBlockData(newBlocks, this.getLevel(), originPos, rotation);
         refreshBlocks();
     }
