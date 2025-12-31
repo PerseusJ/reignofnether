@@ -1,5 +1,6 @@
 package com.solegendary.reignofnether.building;
 
+import com.solegendary.reignofnether.ReignOfNether;
 import com.solegendary.reignofnether.resources.BlockUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -18,14 +19,19 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 
 // a class for static functions related to reading building NBT data (as created by Structure Blocks)
 
 public class BuildingBlockData {
+
+    private static final Set<String> warnedMissingStructures = ConcurrentHashMap.newKeySet();
 
     public static ArrayList<BuildingBlock> getBuildingBlocksFromNbt(String structureName, LevelAccessor level) {
         ResourceManager resourceManager;
@@ -34,13 +40,21 @@ public class BuildingBlockData {
         else
             resourceManager = level.getServer().getResourceManager();
 
-        CompoundTag nbt = getBuildingNbt(structureName, resourceManager);
+        Optional<CompoundTag> nbtOpt = tryGetBuildingNbt(structureName, resourceManager);
+        if (nbtOpt.isEmpty()) {
+            warnMissingStructureOnce(structureName, "getBuildingBlocksFromNbt(structureName, level)");
+            return new ArrayList<>();
+        }
 
-        return getBuildingBlocksFromNbt(nbt);
+        return getBuildingBlocksFromNbt(nbtOpt.get());
     }
 
     public static ArrayList<BuildingBlock> getBuildingBlocksFromNbt(CompoundTag nbt) {
         ArrayList<BuildingBlock> blocks = new ArrayList<>();
+        if (nbt == null) {
+            ReignOfNether.LOGGER.warn("BuildingBlockData: getBuildingBlocksFromNbt called with null NBT; returning empty block list to avoid crash");
+            return blocks;
+        }
 
         // load in blocks (list of blockPos and their palette index)
         ListTag blocksNbt = nbt.getList("blocks", 10);
@@ -71,15 +85,40 @@ public class BuildingBlockData {
     }
 
     public static CompoundTag getBuildingNbt(String structureName, ResourceManager resManager) {
+        return tryGetBuildingNbt(structureName, resManager).orElse(null);
+    }
+
+    /**
+     * Attempts to load a building structure NBT.\n
+     *\n
+     * Primary path: via the provided {@link ResourceManager} (allows resource-pack overrides client-side).\n
+     * Fallback path: bundled mod resource under /assets/reignofnether/structures/*.nbt (works server-side too).\n
+     */
+    public static Optional<CompoundTag> tryGetBuildingNbt(String structureName, ResourceManager resManager) {
+        // 1) Try through resource manager (client-side resource packs, etc.)
         try {
-            ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("reignofnether", "structures/" + structureName + ".nbt");
+            ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "structures/" + structureName + ".nbt");
             Optional<Resource> rs = resManager.getResource(rl);
-            return NbtIo.readCompressed(rs.get().open());
+            if (rs.isPresent()) {
+                try (InputStream in = rs.get().open()) {
+                    return Optional.of(NbtIo.readCompressed(in));
+                }
+            }
+        } catch (Exception e) {
+            ReignOfNether.LOGGER.warn("BuildingBlockData: failed reading structure NBT '{}' via ResourceManager", structureName, e);
         }
-        catch (Exception e) {
-            System.out.println(e);
-            return null;
+
+        // 2) Fallback: read bundled asset directly (important for dedicated server / server ResourceManager differences)
+        String cpPath = "/assets/" + ReignOfNether.MOD_ID + "/structures/" + structureName + ".nbt";
+        try (InputStream in = ReignOfNether.class.getResourceAsStream(cpPath)) {
+            if (in != null) {
+                return Optional.of(NbtIo.readCompressed(in));
+            }
+        } catch (Exception e) {
+            ReignOfNether.LOGGER.warn("BuildingBlockData: failed reading structure NBT '{}' from classpath '{}'", structureName, cpPath, e);
         }
+
+        return Optional.empty();
     }
 
     public static ArrayList<BlockState> getBuildingPalette(CompoundTag nbt) {
@@ -97,5 +136,30 @@ public class BuildingBlockData {
             return results.get(0);
         else
             return null;
+    }
+
+    private static void warnMissingStructureOnce(String structureName, String context) {
+        if (!warnedMissingStructures.add(structureName)) {
+            return;
+        }
+        ReignOfNether.LOGGER.warn(
+            "BuildingBlockData: missing/unreadable structure NBT '{}' (context: {}). " +
+                "This would have crashed previously; now returning empty data. " +
+                "Verify the structure exists at '/assets/{}/structures/{}.nbt' (or is provided by a resource pack).",
+            structureName,
+            context,
+            ReignOfNether.MOD_ID,
+            structureName
+        );
+    }
+
+    /**
+     * Simple regression signal for release builds: verifies the NBT exists as a bundled mod asset.\n
+     *\n
+     * Note: this does not validate the NBT contents, only that the resource path is present.
+     */
+    public static boolean bundledStructureExists(String structureName) {
+        String cpPath = "/assets/" + ReignOfNether.MOD_ID + "/structures/" + structureName + ".nbt";
+        return ReignOfNether.class.getResource(cpPath) != null;
     }
 }
