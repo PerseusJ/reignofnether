@@ -121,6 +121,7 @@ public class ResourceCosts {
     public static final ResourceCost RESEARCH_EVOKER_VEXES = new ResourceCost(ID, "RESEARCH_EVOKER_VEXES");
     public static final ResourceCost RESEARCH_CASTLE_FLAG = new ResourceCost(ID, "RESEARCH_CASTLE_FLAG");
     public static final ResourceCost RESEARCH_GRAND_LIBRARY = new ResourceCost(ID, "RESEARCH_GRAND_LIBRARY");
+    public static final ResourceCost RESEARCH_BLACKSMITH_ARMORER = new ResourceCost(ID, "RESEARCH_BLACKSMITH_ARMORER");
     public static final ResourceCost RESEARCH_SILVERFISH = new ResourceCost(ID, "RESEARCH_SILVERFISH");
     public static final ResourceCost RESEARCH_SCULK_AMPLIFIERS = new ResourceCost(ID, "RESEARCH_SCULK_AMPLIFIERS");
     public static final ResourceCost RESEARCH_RAVAGER_ARTILLERY = new ResourceCost(ID, "RESEARCH_RAVAGER_ARTILLERY");
@@ -151,6 +152,10 @@ public class ResourceCosts {
     public static final ResourceCost ENCHANT_SHARPNESS = new ResourceCost(ID, "ENCHANT_SHARPNESS");
     public static final ResourceCost ENCHANT_MULTISHOT = new ResourceCost(ID, "ENCHANT_MULTISHOT");
     public static final ResourceCost ENCHANT_VIGOR = new ResourceCost(ID, "ENCHANT_VIGOR");
+
+    // BLACKSMITH ABILITIES
+    public static final ResourceCost FORGE_LEATHER_CHESTPLATE = new ResourceCost(ID, "FORGE_LEATHER_CHESTPLATE");
+    public static final ResourceCost FORGE_IRON_CHESTPLATE = new ResourceCost(ID, "FORGE_IRON_CHESTPLATE");
 
     // UNUSED
 
@@ -307,6 +312,7 @@ public class ResourceCosts {
         RESEARCH_EVOKER_VEXES.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_EVOKER_VEXES);
         RESEARCH_CASTLE_FLAG.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_CASTLE_FLAG);
         RESEARCH_GRAND_LIBRARY.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_GRAND_LIBRARY);
+        RESEARCH_BLACKSMITH_ARMORER.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_BLACKSMITH_ARMORER);
         RESEARCH_SILVERFISH.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_SILVERFISH);
         RESEARCH_SCULK_AMPLIFIERS.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_SCULK_AMPLIFIERS);
         RESEARCH_RAVAGER_ARTILLERY.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_RAVAGER_ARTILLERY);
@@ -337,6 +343,10 @@ public class ResourceCosts {
         ENCHANT_SHARPNESS.bakeValues(ReignOfNetherCommonConfigs.EnchantmentCosts.ENCHANT_SHARPNESS);
         ENCHANT_MULTISHOT.bakeValues(ReignOfNetherCommonConfigs.EnchantmentCosts.ENCHANT_MULTISHOT);
         ENCHANT_VIGOR.bakeValues(ReignOfNetherCommonConfigs.EnchantmentCosts.ENCHANT_VIGOR);
+
+        // ******************* BLACKSMITH ABILITIES ******************* //
+        FORGE_LEATHER_CHESTPLATE.bakeValues(ReignOfNetherCommonConfigs.BlacksmithAbilityCosts.FORGE_LEATHER_CHESTPLATE);
+        FORGE_IRON_CHESTPLATE.bakeValues(ReignOfNetherCommonConfigs.BlacksmithAbilityCosts.FORGE_IRON_CHESTPLATE);
 
     }
 }

@@ -87,6 +87,7 @@ public class ProductionItems {
     public static final ResearchAdvancedPortals RESEARCH_ADVANCED_PORTALS = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "advanced_portals"), new ResearchAdvancedPortals());
     public static final ResearchFireResistance RESEARCH_FIRE_RESISTANCE = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "fire_resistance"), new ResearchFireResistance());
     public static final ResearchGrandLibrary RESEARCH_GRAND_LIBRARY = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "grand_library"), new ResearchGrandLibrary());
+    public static final ResearchBlacksmithArmorer RESEARCH_BLACKSMITH_ARMORER = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "blacksmith_armorer"), new ResearchBlacksmithArmorer());
     public static final ResearchSpiderWebs RESEARCH_SPIDER_WEBS = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "spider_webs"), new ResearchSpiderWebs());
     public static final ResearchBloodlust RESEARCH_BLOODLUST = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "bloodlust"), new ResearchBloodlust());
     public static final ResearchCubeMagma RESEARCH_CUBE_MAGMA = register(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "cube_magma"), new ResearchCubeMagma());

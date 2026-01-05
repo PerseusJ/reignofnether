@@ -14,6 +14,10 @@ import com.solegendary.reignofnether.hud.HudClientEvents;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
 import com.solegendary.reignofnether.resources.ResourceName;
 import com.solegendary.reignofnether.resources.ResourceSources;
+import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.resources.Resources;
+import com.solegendary.reignofnether.resources.ResourcesClientEvents;
+import com.solegendary.reignofnether.resources.ResourcesServerEvents;
 import com.solegendary.reignofnether.sandbox.SandboxClientEvents;
 import com.solegendary.reignofnether.sandbox.SandboxServer;
 import com.solegendary.reignofnether.unit.goals.*;
@@ -22,11 +26,15 @@ import com.solegendary.reignofnether.util.LanguageUtil;
 import com.solegendary.reignofnether.util.MiscUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,6 +154,149 @@ public class UnitActionItem {
         }
 
         ArrayList<Unit> formationUnits = new ArrayList<>();
+
+        // Handle blacksmith forge actions as a group operation on the currently selected units.
+        // This mirrors the "enchant" UX (ability button -> UnitAction packet), but applies to all selected units at once.
+        if (action == UnitAction.FORGE_LEATHER_CHESTPLATE || action == UnitAction.FORGE_IRON_CHESTPLATE) {
+            BuildingPlacement actionableBuilding = null;
+            if (!this.selectedBuildingPos.equals(new BlockPos(0, 0, 0))) {
+                actionableBuilding = BuildingUtils.findBuilding(level.isClientSide(), this.selectedBuildingPos);
+            }
+
+            boolean canControlBuilding = actionableBuilding != null && (
+                actionableBuilding.ownerName.equals(ownerName) ||
+                    SandboxServer.isSandboxPlayer(ownerName) ||
+                    AlliancesServerEvents.canControlAlly(ownerName, actionableBuilding.ownerName)
+            );
+
+            if (!canControlBuilding || actionableBuilding == null) {
+                if (level.isClientSide()) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_no_blacksmith"));
+                }
+                return;
+            }
+
+            if (!(actionableBuilding.getBuilding() instanceof com.solegendary.reignofnether.building.buildings.villagers.Blacksmith)) {
+                if (level.isClientSide()) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_no_blacksmith"));
+                }
+                return;
+            }
+
+            if (action == UnitAction.FORGE_IRON_CHESTPLATE && actionableBuilding.getUpgradeLevel() <= 0) {
+                if (level.isClientSide()) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_not_upgraded"));
+                }
+                return;
+            }
+
+            if (actionableUnits.isEmpty()) {
+                if (level.isClientSide()) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_no_units"));
+                }
+                return;
+            }
+
+            final int range = 12;
+            final var cost = (action == UnitAction.FORGE_IRON_CHESTPLATE)
+                ? ResourceCosts.FORGE_IRON_CHESTPLATE
+                : ResourceCosts.FORGE_LEATHER_CHESTPLATE;
+            final var item = (action == UnitAction.FORGE_IRON_CHESTPLATE)
+                ? Items.IRON_CHESTPLATE
+                : Items.LEATHER_CHESTPLATE;
+
+            // Client-side: just trigger cooldown feedback; server-side does the real equipping + resource spend.
+            if (!level.isClientSide()) {
+                Resources res = null;
+                for (Resources resources : ResourcesServerEvents.resourcesList) {
+                    if (resources.ownerName.equals(actionableBuilding.ownerName)) {
+                        res = resources;
+                        break;
+                    }
+                }
+
+                int applied = 0;
+                for (Unit unit : actionableUnits) {
+                    if (!unit.getOwnerName().equals(actionableBuilding.ownerName)) {
+                        continue;
+                    }
+                    LivingEntity le = (LivingEntity) unit;
+                    if (le.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(actionableBuilding.centrePos)) >= range * range) {
+                        continue;
+                    }
+
+                    ItemStack current = le.getItemBySlot(EquipmentSlot.CHEST);
+                    boolean canEquip;
+                    if (action == UnitAction.FORGE_LEATHER_CHESTPLATE) {
+                        canEquip = current.isEmpty();
+                    } else {
+                        canEquip = current.isEmpty() || current.is(Items.LEATHER_CHESTPLATE);
+                    }
+                    if (!canEquip) {
+                        continue;
+                    }
+
+                    if (!SandboxServer.isSandboxPlayer(actionableBuilding.ownerName)) {
+                        if (res == null || res.food < cost.food || res.wood < cost.wood || res.ore < cost.ore) {
+                            break; // apply to as many as affordable
+                        }
+                        ResourcesServerEvents.addSubtractResources(new Resources(actionableBuilding.ownerName, -cost.food, -cost.wood, -cost.ore));
+                    }
+
+                    le.setItemSlot(EquipmentSlot.CHEST, new ItemStack(item));
+                    applied++;
+                }
+
+                if (applied > 0) {
+                    for (Ability ability : actionableBuilding.getAbilities()) {
+                        if (ability.action == action) {
+                            ability.setToMaxCooldown(actionableBuilding);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // Client: show UX errors for common cases (out of range / not enough ore), then trigger cooldown feedback.
+                boolean anyInRange = false;
+                boolean canAffordAtLeastOne = true;
+
+                Resources clientRes = ResourcesClientEvents.getOwnResources();
+                if (!SandboxClientEvents.isSandboxPlayer(ownerName)) {
+                    if (clientRes == null || clientRes.food < cost.food || clientRes.wood < cost.wood || clientRes.ore < cost.ore) {
+                        canAffordAtLeastOne = false;
+                    }
+                }
+
+                for (Unit unit : actionableUnits) {
+                    if (!unit.getOwnerName().equals(actionableBuilding.ownerName)) {
+                        continue;
+                    }
+                    LivingEntity le = (LivingEntity) unit;
+                    if (le.distanceToSqr(Vec3.atCenterOf(actionableBuilding.centrePos)) < range * range) {
+                        anyInRange = true;
+                        break;
+                    }
+                }
+
+                if (!anyInRange) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_out_of_range"));
+                    return;
+                }
+                if (!canAffordAtLeastOne) {
+                    HudClientEvents.showTemporaryMessage(LanguageUtil.getTranslation("ability.reignofnether.forge.error_not_enough_ore"));
+                    return;
+                }
+
+                // Client: cooldown feedback to match other instant abilities
+                for (Ability ability : actionableBuilding.getAbilities()) {
+                    if (ability.action == action) {
+                        ability.setToMaxCooldown(actionableBuilding);
+                        break;
+                    }
+                }
+            }
+            return;
+        }
 
         actionableUnitsLoop:
         for (Unit unit : actionableUnits) {

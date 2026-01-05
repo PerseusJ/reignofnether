@@ -134,6 +134,7 @@ public class ReignOfNetherCommonConfigs {
         ResearchCosts.RESEARCH_EVOKER_VEXES.define(BUILDER);
         ResearchCosts.RESEARCH_CASTLE_FLAG.define(BUILDER);
         ResearchCosts.RESEARCH_GRAND_LIBRARY.define(BUILDER);
+        ResearchCosts.RESEARCH_BLACKSMITH_ARMORER.define(BUILDER);
         ResearchCosts.RESEARCH_SILVERFISH.define(BUILDER);
         ResearchCosts.RESEARCH_SCULK_AMPLIFIERS.define(BUILDER);
         ResearchCosts.RESEARCH_RAVAGER_ARTILLERY.define(BUILDER);
@@ -164,6 +165,11 @@ public class ReignOfNetherCommonConfigs {
         EnchantmentCosts.ENCHANT_SHARPNESS.define(BUILDER);
         EnchantmentCosts.ENCHANT_MULTISHOT.define(BUILDER);
         EnchantmentCosts.ENCHANT_VIGOR.define(BUILDER);
+
+        //*Blacksmith abilities*
+        BUILDER.comment("Blacksmith Ability Cost Configurations");
+        BlacksmithAbilityCosts.FORGE_LEATHER_CHESTPLATE.define(BUILDER);
+        BlacksmithAbilityCosts.FORGE_IRON_CHESTPLATE.define(BUILDER);
         SPEC = BUILDER.build();
     }
 
@@ -286,6 +292,7 @@ public class ReignOfNetherCommonConfigs {
         public static final ResourceCostConfigEntry RESEARCH_EVOKER_VEXES = ResourceCostConfigEntry.Research(500,0,300, 120, ResourceCosts.RESEARCH_EVOKER_VEXES, "Evoker Vex Research Config");
         public static final ResourceCostConfigEntry RESEARCH_CASTLE_FLAG = ResourceCostConfigEntry.Research(200,150,150, 90, ResourceCosts.RESEARCH_CASTLE_FLAG, "Captain Banner Research Config");
         public static final ResourceCostConfigEntry RESEARCH_GRAND_LIBRARY = ResourceCostConfigEntry.Research(0,200,100, 140, ResourceCosts.RESEARCH_GRAND_LIBRARY, "Grand Library Research Config");
+        public static final ResourceCostConfigEntry RESEARCH_BLACKSMITH_ARMORER = ResourceCostConfigEntry.Research(0, 250, 250, 120, ResourceCosts.RESEARCH_BLACKSMITH_ARMORER, "Blacksmith Armorer Upgrade Research Config");
         public static final ResourceCostConfigEntry RESEARCH_SILVERFISH = ResourceCostConfigEntry.Research(0,300,300, 120, ResourceCosts.RESEARCH_SILVERFISH, "Silverfish Research Config");
         public static final ResourceCostConfigEntry RESEARCH_SCULK_AMPLIFIERS = ResourceCostConfigEntry.Research(0,200,400, 150, ResourceCosts.RESEARCH_SCULK_AMPLIFIERS, "Sculk Amplifier Research Config");
         public static final ResourceCostConfigEntry RESEARCH_RAVAGER_ARTILLERY = ResourceCostConfigEntry.Research(400,0,350, 140, ResourceCosts.RESEARCH_RAVAGER_ARTILLERY, "Ravager Artillery Research Config");
@@ -315,6 +322,11 @@ public class ReignOfNetherCommonConfigs {
         public static final ResourceCostConfigEntry ENCHANT_SHARPNESS = ResourceCostConfigEntry.Enchantment(0,40, 60, ResourceCosts.ENCHANT_SHARPNESS, "Sharpness Enchantment Config");
         public static final ResourceCostConfigEntry ENCHANT_MULTISHOT = ResourceCostConfigEntry.Enchantment(0,70, 35, ResourceCosts.ENCHANT_MULTISHOT, "Multishot Enchantment Config");
         public static final ResourceCostConfigEntry ENCHANT_VIGOR = ResourceCostConfigEntry.Enchantment(0,60, 60, ResourceCosts.ENCHANT_VIGOR, "Vigor Enchantment Config");
+    }
+
+    public static class BlacksmithAbilityCosts implements Costs {
+        public static final ResourceCostConfigEntry FORGE_LEATHER_CHESTPLATE = ResourceCostConfigEntry.Enchantment(0, 0, 10, ResourceCosts.FORGE_LEATHER_CHESTPLATE, "Forge Leather Chestplate Cost Config");
+        public static final ResourceCostConfigEntry FORGE_IRON_CHESTPLATE = ResourceCostConfigEntry.Enchantment(0, 0, 25, ResourceCosts.FORGE_IRON_CHESTPLATE, "Forge Iron Chestplate Cost Config");
     }
     public interface Costs {}
 }
